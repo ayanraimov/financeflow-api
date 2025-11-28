@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: financeflow-postgres
+    restart: always
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: financeflow
+      POSTGRES_PASSWORD: financeflow_dev_password
+      POSTGRES_DB: financeflow_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - financeflow-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: financeflow-redis
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - financeflow-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  financeflow-network:
+    driver: bridge
