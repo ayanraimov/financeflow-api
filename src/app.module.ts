@@ -8,6 +8,7 @@ import { validate } from './core/config/env.validation';
 import { PrismaModule } from './infrastructure/database/prisma.module';
 import { CacheModule } from './infrastructure/cache/cache.module';
 import { AuthModule } from './domains/auth/auth.module';
+import { UsersModule } from './domains/users/users.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { AuthModule } from './domains/auth/auth.module';
     PrismaModule,
     CacheModule,
     AuthModule,
+    UsersModule,
 
     // Domain Modules (we'll add them later)
   ],
