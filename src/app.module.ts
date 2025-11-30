@@ -9,6 +9,7 @@ import { PrismaModule } from './infrastructure/database/prisma.module';
 import { CacheModule } from './infrastructure/cache/cache.module';
 import { AuthModule } from './domains/auth/auth.module';
 import { UsersModule } from './domains/users/users.module';
+import { AccountsModule } from './domains/accounts/accounts.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { UsersModule } from './domains/users/users.module';
     CacheModule,
     AuthModule,
     UsersModule,
+    AccountsModule,
 
     // Domain Modules (we'll add them later)
   ],
