@@ -10,6 +10,7 @@ import { CacheModule } from './infrastructure/cache/cache.module';
 import { AuthModule } from './domains/auth/auth.module';
 import { UsersModule } from './domains/users/users.module';
 import { AccountsModule } from './domains/accounts/accounts.module';
+import { TransactionsModule } from './domains/transactions/transactions.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { AccountsModule } from './domains/accounts/accounts.module';
     AuthModule,
     UsersModule,
     AccountsModule,
+    TransactionsModule,
 
     // Domain Modules (we'll add them later)
   ],

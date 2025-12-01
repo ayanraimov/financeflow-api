@@ -3,8 +3,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { JwtStrategy, RefreshTokenStrategy } from './strategies';
 import { PrismaModule } from '../../infrastructure/database/prisma.module';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { RefreshTokenStrategy } from './strategies';
 
 @Module({
   imports: [

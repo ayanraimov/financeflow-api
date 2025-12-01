@@ -30,17 +30,17 @@ model User {
 }
 
 model Account {
-  id        String      @id @default(uuid())
-  userId    String
-  name      String
-  type      AccountType
-  balance   Decimal     @default(0) @db.Decimal(15, 2)
-  currency  String      @default("EUR")
-  color     String      @default("#4ECDC4")
-  icon      String      @default("💳")
-  isActive  Boolean     @default(true)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id       String      @id @default(uuid())
+  userId   String
+  name     String
+  type     AccountType
+  balance  Decimal     @default(0) @db.Decimal(15, 2)
+  currency String      @default("EUR")
+  color    String      @default("#4ECDC4")
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
