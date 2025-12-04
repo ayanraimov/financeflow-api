@@ -11,6 +11,7 @@ import { AuthModule } from './domains/auth/auth.module';
 import { UsersModule } from './domains/users/users.module';
 import { AccountsModule } from './domains/accounts/accounts.module';
 import { TransactionsModule } from './domains/transactions/transactions.module';
+import { CategoriesModule } from './domains/categories/categories.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { TransactionsModule } from './domains/transactions/transactions.module';
     UsersModule,
     AccountsModule,
     TransactionsModule,
+    CategoriesModule,
 
     // Domain Modules (we'll add them later)
   ],
