@@ -13,7 +13,7 @@ import {
 } from 'class-validator';
 import { TransactionType } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsNotFutureDate } from '../validators/is-not-future-date.validator';
+import { IsNotFutureDate } from '../../../core/validators/is-not-future-date.validator';
 
 export class CreateTransactionDto {
   @ApiProperty({
@@ -62,7 +62,7 @@ export class CreateTransactionDto {
     example: '2025-11-30T18:00:00Z',
   })
   @IsDateString()
-  @Validate(IsNotFutureDate) // ⚡ Custom validator
+  @Validate(IsNotFutureDate)
   date: string;
 
   @ApiProperty({

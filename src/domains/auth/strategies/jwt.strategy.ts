@@ -41,6 +41,18 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Usuario no autorizado');
     }
 
-    return user;
+    // ✅ Retornar objeto con 'sub' para mantener estándar JWT
+    // Además incluir datos del usuario para acceso conveniente
+    return {
+      sub: user.id,
+      email: user.email,
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+      defaultCurrency: user.defaultCurrency,
+      emailVerified: user.emailVerified,
+      createdAt: user.createdAt,
+    };
   }
 }

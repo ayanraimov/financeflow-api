@@ -12,6 +12,7 @@ import { UsersModule } from './domains/users/users.module';
 import { AccountsModule } from './domains/accounts/accounts.module';
 import { TransactionsModule } from './domains/transactions/transactions.module';
 import { CategoriesModule } from './domains/categories/categories.module';
+import { BudgetsModule } from './domains/budgets/budgets.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { CategoriesModule } from './domains/categories/categories.module';
     AccountsModule,
     TransactionsModule,
     CategoriesModule,
+    BudgetsModule,
 
     // Domain Modules (we'll add them later)
   ],
