@@ -30,23 +30,25 @@ model User {
 }
 
 model Account {
-  id       String      @id @default(uuid())
-  userId   String
-  name     String
-  type     AccountType
-  balance  Decimal     @default(0) @db.Decimal(15, 2)
-  currency String      @default("EUR")
-  color    String      @default("#4ECDC4")
-
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String      @id @default(uuid())
+  userId    String
+  name      String
+  type      AccountType
+  balance   Decimal     @default(0) @db.Decimal(15, 2)
+  currency  String      @default("EUR")
+  color     String      @default("#4ECDC4")
+  isDefault Boolean     @default(false)
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   // Relations
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
 
   @@index([userId])
+  @@index([userId, isDefault])
+  @@index([userId, isActive])
   @@map("accounts")
 }
 
@@ -70,9 +72,13 @@ model Transaction {
   category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   @@index([userId])
-  @@index([accountId])
-  @@index([categoryId])
+  @@index([userId, date])
+  @@index([userId, type])
+  @@index([userId, accountId])
+  @@index([userId, categoryId])
+  @@index([accountId, date])
   @@index([date])
+  @@index([userId, isRecurring])
   @@map("transactions")
 }
 
@@ -93,7 +99,8 @@ model Category {
   budgets      Budget[]
 
   @@index([userId])
-  @@index([type])
+  @@index([userId, type])
+  @@index([type, isDefault])
   @@map("categories")
 }
 
@@ -116,7 +123,10 @@ model Budget {
   category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   @@index([userId])
-  @@index([categoryId])
+  @@index([userId, period])
+  @@index([userId, categoryId])
+  @@index([startDate, endDate])
+  @@index([userId, isActive])
   @@map("budgets")
 }
 
