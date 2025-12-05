@@ -13,6 +13,7 @@ import { BudgetProgressDto } from './dto/budget-progress.dto';
 import { BudgetPeriod, TransactionType, Prisma } from '@prisma/client';
 import { addDays, addMonths, addYears, differenceInDays } from 'date-fns';
 import { Decimal } from '@prisma/client/runtime/library';
+import { CacheInvalidationService } from '../../core/services/cache-invalidation.service';
 
 type BudgetWithCategory = Prisma.BudgetGetPayload<{
   include: {
@@ -24,7 +25,10 @@ type BudgetWithCategory = Prisma.BudgetGetPayload<{
 export class BudgetsService {
   private readonly logger = new Logger(BudgetsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheInvalidation: CacheInvalidationService,
+  ) {}
 
   async create(userId: string, createBudgetDto: CreateBudgetDto) {
     this.logger.log(`Creating budget for user ${userId}`);
@@ -93,6 +97,7 @@ export class BudgetsService {
 
     this.logger.log(`Budget created successfully: ${budget.id}`);
 
+    await this.cacheInvalidation.invalidateBudgets(userId);
     return {
       success: true,
       data: this.formatBudgetResponse(budget),
@@ -277,6 +282,7 @@ export class BudgetsService {
 
     this.logger.log(`Budget ${id} updated successfully`);
 
+    await this.cacheInvalidation.invalidateBudgets(userId);
     return {
       success: true,
       data: this.formatBudgetResponse(budget),
@@ -300,6 +306,7 @@ export class BudgetsService {
 
     this.logger.log(`Budget ${id} deleted (soft) successfully`);
 
+    await this.cacheInvalidation.invalidateBudgets(userId);
     return {
       success: true,
       message: 'Presupuesto eliminado exitosamente',

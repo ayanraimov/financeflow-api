@@ -12,19 +12,22 @@ import { TransactionFilterDto } from './dto/transaction-filter.dto';
 import { BulkTransactionDto } from './dto/bulk-transaction.dto';
 import { Prisma, TransactionType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { CacheInvalidationService } from '../../core/services/cache-invalidation.service';
 
 @Injectable()
 export class TransactionsService {
-  private readonly logger = new Logger(TransactionsService.name);
+  private readonly logger = new Logger(TransactionsService.name); // ✅ Añadir esta línea
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheInvalidation: CacheInvalidationService,
+  ) {}
 
   /**
    * Create single transaction with atomic balance update
    */
   async create(userId: string, dto: CreateTransactionDto) {
     await this.validateAccountOwnership(userId, dto.accountId);
-
     await this.validateCategoryTypeMatch(dto.categoryId, dto.type);
 
     const result = await this.prisma.$transaction(
@@ -76,29 +79,11 @@ export class TransactionsService {
       },
     );
 
+    await this.cacheInvalidation.invalidateTransactionRelated(userId);
+
     return result;
   }
 
-  private async validateCategoryTypeMatch(
-    categoryId: string,
-    transactionType: TransactionType,
-  ): Promise<void> {
-    const category = await this.prisma.category.findUnique({
-      where: { id: categoryId },
-      select: { type: true, name: true },
-    });
-
-    if (!category) {
-      throw new NotFoundException(`Category with ID ${categoryId} not found`);
-    }
-
-    // Validar que el tipo coincida
-    if (category.type !== transactionType) {
-      throw new BadRequestException(
-        `Category type mismatch: "${category.name}" is a ${category.type} category, but you're trying to create a ${transactionType} transaction`,
-      );
-    }
-  }
   /**
    * Find all transactions with filters and pagination
    */
@@ -244,6 +229,8 @@ export class TransactionsService {
       },
     );
 
+    await this.cacheInvalidation.invalidateTransactionRelated(userId);
+
     return result;
   }
 
@@ -278,6 +265,8 @@ export class TransactionsService {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       },
     );
+
+    await this.cacheInvalidation.invalidateTransactionRelated(userId);
 
     return { success: true, message: 'Transaction deleted successfully' };
   }
@@ -385,12 +374,13 @@ export class TransactionsService {
       },
     );
 
+    await this.cacheInvalidation.invalidateTransactionRelated(userId);
+
     return { success: true, data: results, count: results.length };
   }
 
   /**
    * Recalculate account balance from all transactions
-   * NOTE: Without initialBalance field, this assumes balance starts at 0
    */
   async recalculateAccountBalance(accountId: string) {
     const account = await this.prisma.account.findUnique({
@@ -416,7 +406,6 @@ export class TransactionsService {
     const totalIncome = aggregations[0]._sum.amount ?? new Decimal(0);
     const totalExpense = aggregations[1]._sum.amount ?? new Decimal(0);
 
-    // Calculate balance as: INCOME - EXPENSE (assumes initial balance = 0)
     const calculatedBalance = totalIncome.minus(totalExpense);
 
     await this.prisma.account.update({
@@ -431,9 +420,28 @@ export class TransactionsService {
     return calculatedBalance;
   }
 
-  /**
-   * Helper: Validate account ownership
-   */
+  // ==================== PRIVATE HELPERS ====================
+
+  private async validateCategoryTypeMatch(
+    categoryId: string,
+    transactionType: TransactionType,
+  ): Promise<void> {
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+      select: { type: true, name: true },
+    });
+
+    if (!category) {
+      throw new NotFoundException(`Category with ID ${categoryId} not found`);
+    }
+
+    if (category.type !== transactionType) {
+      throw new BadRequestException(
+        `Category type mismatch: "${category.name}" is a ${category.type} category, but you're trying to create a ${transactionType} transaction`,
+      );
+    }
+  }
+
   private async validateAccountOwnership(
     userId: string,
     accountId: string,

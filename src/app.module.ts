@@ -14,6 +14,7 @@ import { TransactionsModule } from './domains/transactions/transactions.module';
 import { CategoriesModule } from './domains/categories/categories.module';
 import { BudgetsModule } from './domains/budgets/budgets.module';
 import { AnalyticsModule } from './domains/analytics/analytics.module';
+import { CoreModule } from './core/core.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { AnalyticsModule } from './domains/analytics/analytics.module';
     CategoriesModule,
     BudgetsModule,
     AnalyticsModule,
+    CoreModule,
 
     // Domain Modules (we'll add them later)
   ],

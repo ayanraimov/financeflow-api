@@ -1,4 +1,6 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor } from '../../core/interceptors/cache.interceptor';
+import { CacheResult } from '../../core/decorators/cache-result.decorator';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { TransactionType, Prisma } from '@prisma/client';
 import {
@@ -18,11 +20,13 @@ import { AnalyticsPeriod } from './dto/analytics-period.dto';
 import { CategorySummary } from './interfaces/category-summary.interface';
 
 @Injectable()
+@UseInterceptors(CacheInterceptor)
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
+  @CacheResult('analytics:overview', 300)
   async getOverview(userId: string, period: AnalyticsPeriod, date?: string) {
     this.logger.log(`Getting overview for user ${userId}, period ${period}`);
 
@@ -93,6 +97,7 @@ export class AnalyticsService {
     };
   }
 
+  @CacheResult('analytics:spending', 300)
   async getSpending(userId: string, startDate: string, endDate: string) {
     this.logger.log(`Getting spending analysis for user ${userId}`);
 
@@ -147,6 +152,7 @@ export class AnalyticsService {
     };
   }
 
+  @CacheResult('analytics:income', 300)
   async getIncome(userId: string, startDate: string, endDate: string) {
     this.logger.log(`Getting income analysis for user ${userId}`);
 
@@ -240,6 +246,7 @@ export class AnalyticsService {
     };
   }
 
+  @CacheResult('analytics:categories', 300) // ✅ Key + TTL 5 min
   async getCategoriesDistribution(
     userId: string,
     period: AnalyticsPeriod,
@@ -268,6 +275,7 @@ export class AnalyticsService {
     };
   }
 
+  @CacheResult('analytics:comparison', 300) // ✅ Key + TTL 5 min
   async getComparison(
     userId: string,
     currentStart: string,
