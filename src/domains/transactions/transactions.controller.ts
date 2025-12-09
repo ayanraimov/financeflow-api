@@ -25,6 +25,7 @@ import { TransactionFilterDto } from './dto/transaction-filter.dto';
 import { BulkTransactionDto } from './dto/bulk-transaction.dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CurrentUser } from '../../core/decorators/current-user.decorator';
+import { PaginatedResponse } from '../../core/interfaces/paginated-response.interface';
 
 @ApiTags('Transactions')
 @ApiBearerAuth()
@@ -60,14 +61,10 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Get all transactions with filters' })
   @ApiResponse({ status: 200, description: 'Transactions retrieved' })
   async findAll(
-    @CurrentUser('id') userId: string,
+    @CurrentUser('sub') userId: string,
     @Query() filters: TransactionFilterDto,
-  ) {
-    const result = await this.transactionsService.findAll(userId, filters);
-    return {
-      success: true,
-      ...result,
-    };
+  ): Promise<PaginatedResponse<any>> {
+    return this.transactionsService.findAll(userId, filters);
   }
 
   @Get('search')

@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsUUID,
   IsInt,
+  IsString,
   Min,
   Max,
 } from 'class-validator';
@@ -53,6 +54,14 @@ export class TransactionFilterDto {
   accountId?: string;
 
   @ApiPropertyOptional({
+    description: 'Search in description and notes',
+    example: 'grocery',
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional({
     description: 'Page number',
     example: 1,
     minimum: 1,
@@ -77,4 +86,10 @@ export class TransactionFilterDto {
   @Min(1)
   @Max(100)
   limit?: number = 20;
+
+  get skip(): number {
+    const page = this.page ?? 1;
+    const limit = this.limit ?? 20;
+    return (page - 1) * limit;
+  }
 }

@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { PaginatedResponse, PaginationMeta } from '../../core/interfaces/paginated-response.interface';
 import { TransactionFilterDto } from './dto/transaction-filter.dto';
 import { BulkTransactionDto } from './dto/bulk-transaction.dto';
 import { Prisma, TransactionType } from '@prisma/client';
@@ -87,50 +88,83 @@ export class TransactionsService {
   /**
    * Find all transactions with filters and pagination
    */
-  async findAll(userId: string, filters: TransactionFilterDto) {
-    const { startDate, endDate, type, categoryId, accountId } = filters;
-    const page = filters.page ?? 1;
-    const limit = filters.limit ?? 20;
+  async findAll(
+    userId: string,
+    filters: TransactionFilterDto,
+  ): Promise<PaginatedResponse<any>> {
+    const {
+      page = 1,
+      limit = 20,
+      accountId,
+      categoryId,
+      type,
+      startDate,
+      endDate,
+      search,
+    } = filters;
 
-    if (accountId) {
-      await this.validateAccountOwnership(userId, accountId);
+    // Build where clause
+    const where: any = { userId };
+
+    if (accountId) where.accountId = accountId;
+    if (categoryId) where.categoryId = categoryId;
+    if (type) where.type = type;
+
+    // Date range filter
+    if (startDate || endDate) {
+      where.date = {};
+      if (startDate) where.date.gte = new Date(startDate);
+      if (endDate) where.date.lte = new Date(endDate);
     }
 
-    const where: Prisma.TransactionWhereInput = {
-      userId,
-      ...(startDate && { date: { gte: new Date(startDate) } }),
-      ...(endDate && { date: { lte: new Date(endDate) } }),
-      ...(type && { type }),
-      ...(categoryId && { categoryId }),
-      ...(accountId && { accountId }),
-    };
+    // Search filter
+    if (search) {
+      where.OR = [
+        { description: { contains: search, mode: 'insensitive' } },
+        { notes: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
+    // Calculate skip
+    const skip = (page - 1) * limit;
+
+    // Execute queries in parallel
     const [transactions, total] = await Promise.all([
       this.prisma.transaction.findMany({
         where,
+        skip,
+        take: limit,
+        orderBy: { date: 'desc' },
         include: {
-          category: {
-            select: { name: true, icon: true, color: true, type: true },
-          },
           account: {
-            select: { name: true, type: true, currency: true },
+            select: { id: true, name: true, type: true, color: true },
+          },
+          category: {
+            select: { id: true, name: true, icon: true, color: true, type: true },
           },
         },
-        orderBy: { date: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
       }),
       this.prisma.transaction.count({ where }),
     ]);
 
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(total / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    const meta: PaginationMeta = {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNextPage,
+      hasPreviousPage,
+    };
+
     return {
+      success: true,
       data: transactions,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      meta,
     };
   }
 
