@@ -16,7 +16,10 @@ import {
   differenceInDays,
   format,
 } from 'date-fns';
-import { AnalyticsPeriod } from './dto/analytics-period.dto';
+import {
+  AnalyticsPeriod,
+  AnalyticsPeriodDto,
+} from './dto/analytics-period.dto';
 import { CategorySummary } from './interfaces/category-summary.interface';
 
 @Injectable()
@@ -27,55 +30,73 @@ export class AnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
 
   @CacheResult('analytics:overview', 300)
-  async getOverview(userId: string, period: AnalyticsPeriod, date?: string) {
+  async getOverview(
+    userId: string,
+    period: AnalyticsPeriod,
+    date?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
     this.logger.log(`Getting overview for user ${userId}, period ${period}`);
 
-    const { startDate, endDate } = this.calculateDateRange(period, date);
+    // ✅ Calcular el rango de fechas (ahora soporta custom)
+    const { startDate: start, endDate: end } = this.calculateDateRange(
+      period,
+      date,
+      startDate,
+      endDate,
+    );
 
-    // Parallel queries para performance
-    const [incomeResult, expensesResult, accountsBalance, transactionCount, topCategories, recentTransactions] =
-      await Promise.all([
-        this.getTransactionsSummary(userId, startDate, endDate, TransactionType.INCOME),
-        this.getTransactionsSummary(userId, startDate, endDate, TransactionType.EXPENSE),
-        this.getAccountsBalance(userId),
-        this.prisma.transaction.count({
-          where: {
-            userId,
-            date: { gte: startDate, lte: endDate },
+    // ✅ CORREGIDO: Promise.all con sintaxis correcta
+    const [
+      incomeResult,
+      expensesResult,
+      accountsBalance,
+      transactionCount,
+      topCategories,
+      recentTransactions,
+    ] = await Promise.all([
+      this.getTransactionsSummary(userId, start, end, TransactionType.INCOME),
+      this.getTransactionsSummary(userId, start, end, TransactionType.EXPENSE),
+      this.getAccountsBalance(userId),
+      this.prisma.transaction.count({
+        where: {
+          userId,
+          date: { gte: start, lte: end }, // ✅ Usar start/end (Date)
+        },
+      }),
+      this.getTopCategories(userId, start, end, TransactionType.EXPENSE, 5), // ✅ Cerrado correctamente
+      this.prisma.transaction.findMany({
+        where: {
+          userId,
+          date: { gte: start, lte: end }, // ✅ Usar start/end (Date)
+        },
+        include: {
+          category: {
+            select: { id: true, name: true, icon: true, color: true },
           },
-        }),
-        this.getTopCategories(userId, startDate, endDate, TransactionType.EXPENSE, 5),
-        this.prisma.transaction.findMany({
-          where: {
-            userId,
-            date: { gte: startDate, lte: endDate },
+          account: {
+            select: { id: true, name: true, type: true },
           },
-          include: {
-            category: {
-              select: { id: true, name: true, icon: true, color: true },
-            },
-            account: {
-              select: { id: true, name: true, type: true },
-            },
-          },
-          orderBy: { date: 'desc' },
-          take: 10,
-        }),
-      ]);
+        },
+        orderBy: { date: 'desc' },
+        take: 10,
+      }),
+    ]);
 
     const totalIncome = incomeResult.total;
     const totalExpenses = expensesResult.total;
     const netSavings = totalIncome - totalExpenses;
     const savingsRate = totalIncome > 0 ? (netSavings / totalIncome) * 100 : 0;
-    const days = differenceInDays(endDate, startDate) + 1;
+    const days = differenceInDays(end, start) + 1;
     const avgDailyExpense = days > 0 ? totalExpenses / days : 0;
 
     return {
       success: true,
       data: {
         period,
-        startDate,
-        endDate,
+        startDate: start, // ✅ Retornar Date objects
+        endDate: end,     // ✅ Retornar Date objects
         totalIncome: parseFloat(totalIncome.toFixed(2)),
         totalExpenses: parseFloat(totalExpenses.toFixed(2)),
         netSavings: parseFloat(netSavings.toFixed(2)),
@@ -96,6 +117,7 @@ export class AnalyticsService {
       },
     };
   }
+
 
   @CacheResult('analytics:spending', 300)
   async getSpending(userId: string, startDate: string, endDate: string) {
@@ -370,6 +392,8 @@ export class AnalyticsService {
   private calculateDateRange(
     period: AnalyticsPeriod,
     dateStr?: string,
+    customStartDate?: string,
+    customEndDate?: string,
   ): { startDate: Date; endDate: Date } {
     const referenceDate = dateStr ? new Date(dateStr) : new Date();
 
@@ -379,20 +403,40 @@ export class AnalyticsService {
           startDate: startOfWeek(referenceDate, { weekStartsOn: 1 }),
           endDate: endOfWeek(referenceDate, { weekStartsOn: 1 }),
         };
+
       case AnalyticsPeriod.MONTH:
         return {
           startDate: startOfMonth(referenceDate),
           endDate: endOfMonth(referenceDate),
         };
+
       case AnalyticsPeriod.YEAR:
         return {
           startDate: startOfYear(referenceDate),
           endDate: endOfYear(referenceDate),
         };
+
+      // ✅ NUEVO: Soporte para período custom
+      case AnalyticsPeriod.CUSTOM:
+        if (!customStartDate || !customEndDate) {
+          throw new BadRequestException(
+            'Las fechas startDate y endDate son requeridas cuando el período es "custom"',
+          );
+        }
+
+        // Validar el rango
+        this.validateDateRange(customStartDate, customEndDate);
+
+        return {
+          startDate: new Date(customStartDate),
+          endDate: new Date(customEndDate),
+        };
+
       default:
         throw new BadRequestException('Período inválido');
     }
   }
+
 
   private calculateIntervalDates(
     period: AnalyticsPeriod,
@@ -573,6 +617,13 @@ export class AnalyticsService {
 
     if (start > new Date()) {
       throw new BadRequestException('La fecha de inicio no puede ser futura');
+    }
+
+    const diffInDays = differenceInDays(end, start);
+    if (diffInDays > 365) {
+      throw new BadRequestException(
+        'El rango de fechas no puede exceder 1 año (365 días)',
+      );
     }
   }
 }

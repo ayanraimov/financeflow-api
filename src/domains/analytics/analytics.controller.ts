@@ -34,7 +34,7 @@ export class AnalyticsController {
   })
   @ApiQuery({
     name: 'period',
-    enum: ['WEEK', 'MONTH', 'YEAR'],
+    enum: ['WEEK', 'MONTH', 'YEAR', 'CUSTOM'],
     required: false,
   })
   @ApiQuery({ name: 'date', required: false, type: String })
@@ -47,7 +47,13 @@ export class AnalyticsController {
     @Query() query: AnalyticsPeriodDto,
   ) {
     const period = query.period ?? AnalyticsPeriod.MONTH;
-    return this.analyticsService.getOverview(userId, period, query.date);
+    return this.analyticsService.getOverview(
+      userId,
+      period,
+      query.date,
+      query.startDate,
+      query.endDate,
+    );
   }
 
   @Get('spending')
@@ -86,7 +92,11 @@ export class AnalyticsController {
     description: 'Análisis de ingresos obtenido exitosamente',
   })
   getIncome(@CurrentUser('sub') userId: string, @Query() query: DateRangeDto) {
-    return this.analyticsService.getIncome(userId, query.startDate, query.endDate);
+    return this.analyticsService.getIncome(
+      userId,
+      query.startDate,
+      query.endDate,
+    );
   }
 
   @Get('trends')
