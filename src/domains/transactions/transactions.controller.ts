@@ -26,6 +26,7 @@ import { BulkTransactionDto } from './dto/bulk-transaction.dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CurrentUser } from '../../core/decorators/current-user.decorator';
 import { PaginatedResponse } from '../../core/interfaces/paginated-response.interface';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Transactions')
 @ApiBearerAuth()
@@ -35,6 +36,7 @@ export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Post()
+  @Throttle({ default: { limit: 50, ttl: 60000 } })
   @ApiOperation({ summary: 'Create a new transaction' })
   @ApiResponse({
     status: 201,
@@ -111,10 +113,7 @@ export class TransactionsController {
   @ApiResponse({ status: 200, description: 'Transaction found' })
   @ApiResponse({ status: 404, description: 'Transaction not found' })
   @ApiResponse({ status: 403, description: 'Access denied' })
-  async findOne(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
+  async findOne(@CurrentUser('id') userId: string, @Param('id') id: string) {
     const transaction = await this.transactionsService.findOne(userId, id);
     return {
       success: true,
@@ -150,10 +149,7 @@ export class TransactionsController {
   @ApiResponse({ status: 200, description: 'Transaction deleted' })
   @ApiResponse({ status: 404, description: 'Transaction not found' })
   @ApiResponse({ status: 403, description: 'Access denied' })
-  async remove(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
+  async remove(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return await this.transactionsService.remove(userId, id);
   }
 
@@ -168,6 +164,9 @@ export class TransactionsController {
     @CurrentUser('id') userId: string,
     @Body() bulkTransactionDto: BulkTransactionDto,
   ) {
-    return await this.transactionsService.bulkCreate(userId, bulkTransactionDto);
+    return await this.transactionsService.bulkCreate(
+      userId,
+      bulkTransactionDto,
+    );
   }
 }

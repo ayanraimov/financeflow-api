@@ -17,6 +17,7 @@ import { RegisterDto, LoginDto, AuthResponseDto, RefreshTokenDto } from './dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
 import { GetUser } from '../../core/decorators/get-user.decorator';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -24,6 +25,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 3, ttl: 600000 } }) // 10 minutes
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Registrar un nuevo usuario' })
   @ApiResponse({
@@ -38,6 +40,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Iniciar sesión' })
   @ApiResponse({
@@ -51,6 +54,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @UseGuards(RefreshTokenGuard)
   @ApiOperation({ summary: 'Refrescar tokens de acceso' })
@@ -59,7 +63,10 @@ export class AuthController {
     description: 'Tokens refrescados exitosamente',
     type: AuthResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Refresh token inválido o expirado' })
+  @ApiResponse({
+    status: 401,
+    description: 'Refresh token inválido o expirado',
+  })
   async refreshTokens(
     @GetUser('sub') userId: string,
     @Body() refreshTokenDto: RefreshTokenDto,
@@ -68,6 +75,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @SkipThrottle()
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

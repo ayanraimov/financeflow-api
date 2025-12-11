@@ -9,15 +9,20 @@ import {
 import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CurrentUser } from '../../core/decorators/current-user.decorator';
-import { AnalyticsPeriodDto, AnalyticsPeriod } from './dto/analytics-period.dto';
+import {
+  AnalyticsPeriodDto,
+  AnalyticsPeriod,
+} from './dto/analytics-period.dto';
 import { DateRangeDto } from './dto/date-range.dto';
 import { TrendsDto } from './dto/trends.dto';
 import { ComparisonDto } from './dto/comparison.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Analytics')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('analytics')
+@Throttle({ analytics: { limit: 30, ttl: 60000 } })
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
@@ -27,7 +32,11 @@ export class AnalyticsController {
     description:
       'Retorna ingresos, gastos, ahorros, top categorías y transacciones recientes',
   })
-  @ApiQuery({ name: 'period', enum: ['WEEK', 'MONTH', 'YEAR'], required: false })
+  @ApiQuery({
+    name: 'period',
+    enum: ['WEEK', 'MONTH', 'YEAR'],
+    required: false,
+  })
   @ApiQuery({ name: 'date', required: false, type: String })
   @ApiResponse({
     status: 200,
@@ -37,7 +46,6 @@ export class AnalyticsController {
     @CurrentUser('sub') userId: string,
     @Query() query: AnalyticsPeriodDto,
   ) {
-    // ✅ Manejar valor por defecto
     const period = query.period ?? AnalyticsPeriod.MONTH;
     return this.analyticsService.getOverview(userId, period, query.date);
   }
@@ -45,7 +53,8 @@ export class AnalyticsController {
   @Get('spending')
   @ApiOperation({
     summary: 'Análisis detallado de gastos',
-    description: 'Retorna gastos por categoría, diarios, promedio y mayor gasto',
+    description:
+      'Retorna gastos por categoría, diarios, promedio y mayor gasto',
   })
   @ApiQuery({ name: 'startDate', required: true, type: String })
   @ApiQuery({ name: 'endDate', required: true, type: String })
@@ -67,7 +76,8 @@ export class AnalyticsController {
   @Get('income')
   @ApiOperation({
     summary: 'Análisis detallado de ingresos',
-    description: 'Retorna ingresos por categoría, diarios, promedio y mayor ingreso',
+    description:
+      'Retorna ingresos por categoría, diarios, promedio y mayor ingreso',
   })
   @ApiQuery({ name: 'startDate', required: true, type: String })
   @ApiQuery({ name: 'endDate', required: true, type: String })
@@ -84,14 +94,17 @@ export class AnalyticsController {
     summary: 'Evolución temporal de finanzas',
     description: 'Retorna ingresos, gastos y ahorros por períodos históricos',
   })
-  @ApiQuery({ name: 'period', enum: ['WEEK', 'MONTH', 'YEAR'], required: false })
+  @ApiQuery({
+    name: 'period',
+    enum: ['WEEK', 'MONTH', 'YEAR'],
+    required: false,
+  })
   @ApiQuery({ name: 'intervals', required: false, type: Number })
   @ApiResponse({
     status: 200,
     description: 'Tendencias obtenidas exitosamente',
   })
   getTrends(@CurrentUser('sub') userId: string, @Query() query: TrendsDto) {
-    // ✅ Manejar valores por defecto
     const period = query.period ?? AnalyticsPeriod.MONTH;
     const intervals = query.intervals ?? 6;
     return this.analyticsService.getTrends(userId, period, intervals);
@@ -102,7 +115,11 @@ export class AnalyticsController {
     summary: 'Distribución de gastos por categorías',
     description: 'Retorna breakdown de gastos por categoría con porcentajes',
   })
-  @ApiQuery({ name: 'period', enum: ['WEEK', 'MONTH', 'YEAR'], required: false })
+  @ApiQuery({
+    name: 'period',
+    enum: ['WEEK', 'MONTH', 'YEAR'],
+    required: false,
+  })
   @ApiQuery({ name: 'date', required: false, type: String })
   @ApiResponse({
     status: 200,

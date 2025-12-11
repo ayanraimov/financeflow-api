@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import configuration from './core/config/configuration';
@@ -15,6 +15,7 @@ import { CategoriesModule } from './domains/categories/categories.module';
 import { BudgetsModule } from './domains/budgets/budgets.module';
 import { AnalyticsModule } from './domains/analytics/analytics.module';
 import { CoreModule } from './core/core.module';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -29,8 +30,24 @@ import { CoreModule } from './core/core.module';
     // Rate Limiting
     ThrottlerModule.forRoot([
       {
+        name: 'default',
         ttl: 60000, // 1 minute
-        limit: 10, // 10 requests per minute
+        limit: 100, // 100 requests per minute (general)
+      },
+      {
+        name: 'auth',
+        ttl: 60000, // 1 minute
+        limit: 5, // 5 requests per minute (auth endpoints)
+      },
+      {
+        name: 'strict',
+        ttl: 600000, // 10 minutes
+        limit: 3, // 3 requests per 10 minutes (register)
+      },
+      {
+        name: 'analytics',
+        ttl: 60000, // 1 minute
+        limit: 30, // 30 requests per minute (heavy queries)
       },
     ]),
 
@@ -49,6 +66,12 @@ import { CoreModule } from './core/core.module';
     // Domain Modules (we'll add them later)
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
