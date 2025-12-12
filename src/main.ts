@@ -50,7 +50,9 @@ async function bootstrap() {
   app.enableCors({
     origin:
       nodeEnv === 'production'
-        ? configService.get('CORS_ORIGIN')?.split(',') || ['https://your-domain.com']
+        ? configService.get('CORS_ORIGIN')?.split(',') || [
+            'https://your-domain.com',
+          ]
         : '*',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -85,7 +87,7 @@ async function bootstrap() {
     .addTag('Transactions', 'Transacciones')
     .addTag('Categories', 'Categorías')
     .addTag('Budgets', 'Presupuestos')
-    .addTag('Analytics', 'Análisis y reportes financieros') // ✅ Agregado
+    .addTag('Analytics', 'Análisis y reportes financieros')
     .addBearerAuth()
     .build();
 
@@ -102,7 +104,9 @@ async function bootstrap() {
   logger.log(`🌍 Environment: ${nodeEnv}`);
   logger.log(`🔒 Security headers enabled (Helmet)`);
   logger.log(`📦 Response compression enabled (gzip)`);
-  logger.log(`🛡️  CORS enabled for: ${nodeEnv === 'production' ? configService.get('CORS_ORIGIN') : '*'}`);
+  logger.log(
+    `🛡️  CORS enabled for: ${nodeEnv === 'production' ? configService.get('CORS_ORIGIN') : '*'}`,
+  );
   logger.log(`⚡ Rate limiting enabled (Throttler)`);
 }
 

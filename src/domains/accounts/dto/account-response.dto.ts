@@ -20,7 +20,7 @@ export class AccountResponseDto {
   type: string;
 
   @ApiProperty({
-    example: 1500.50,
+    example: 1500.5,
     description: 'Balance actual',
   })
   balance: number;

@@ -1,4 +1,9 @@
-import { Injectable, Logger, BadRequestException, UseInterceptors } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CacheInterceptor } from '../../core/interceptors/cache.interceptor';
 import { CacheResult } from '../../core/decorators/cache-result.decorator';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
@@ -39,7 +44,6 @@ export class AnalyticsService {
   ) {
     this.logger.log(`Getting overview for user ${userId}, period ${period}`);
 
-    // ✅ Calcular el rango de fechas (ahora soporta custom)
     const { startDate: start, endDate: end } = this.calculateDateRange(
       period,
       date,
@@ -47,7 +51,6 @@ export class AnalyticsService {
       endDate,
     );
 
-    // ✅ CORREGIDO: Promise.all con sintaxis correcta
     const [
       incomeResult,
       expensesResult,
@@ -62,14 +65,14 @@ export class AnalyticsService {
       this.prisma.transaction.count({
         where: {
           userId,
-          date: { gte: start, lte: end }, // ✅ Usar start/end (Date)
+          date: { gte: start, lte: end },
         },
       }),
-      this.getTopCategories(userId, start, end, TransactionType.EXPENSE, 5), // ✅ Cerrado correctamente
+      this.getTopCategories(userId, start, end, TransactionType.EXPENSE, 5),
       this.prisma.transaction.findMany({
         where: {
           userId,
-          date: { gte: start, lte: end }, // ✅ Usar start/end (Date)
+          date: { gte: start, lte: end },
         },
         include: {
           category: {
@@ -95,8 +98,8 @@ export class AnalyticsService {
       success: true,
       data: {
         period,
-        startDate: start, // ✅ Retornar Date objects
-        endDate: end,     // ✅ Retornar Date objects
+        startDate: start,
+        endDate: end,
         totalIncome: parseFloat(totalIncome.toFixed(2)),
         totalExpenses: parseFloat(totalExpenses.toFixed(2)),
         netSavings: parseFloat(netSavings.toFixed(2)),
@@ -118,7 +121,6 @@ export class AnalyticsService {
     };
   }
 
-
   @CacheResult('analytics:spending', 300)
   async getSpending(userId: string, startDate: string, endDate: string) {
     this.logger.log(`Getting spending analysis for user ${userId}`);
@@ -128,23 +130,31 @@ export class AnalyticsService {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    const [summary, byCategory, largestExpense, dailyBreakdown] = await Promise.all([
-      this.getTransactionsSummary(userId, start, end, TransactionType.EXPENSE),
-      this.getCategoryBreakdown(userId, start, end, TransactionType.EXPENSE),
-      this.prisma.transaction.findFirst({
-        where: {
+    const [summary, byCategory, largestExpense, dailyBreakdown] =
+      await Promise.all([
+        this.getTransactionsSummary(
           userId,
-          type: TransactionType.EXPENSE,
-          date: { gte: start, lte: end },
-        },
-        include: {
-          category: { select: { id: true, name: true, icon: true, color: true } },
-          account: { select: { id: true, name: true, type: true } },
-        },
-        orderBy: { amount: 'desc' },
-      }),
-      this.getDailyBreakdown(userId, start, end, TransactionType.EXPENSE),
-    ]);
+          start,
+          end,
+          TransactionType.EXPENSE,
+        ),
+        this.getCategoryBreakdown(userId, start, end, TransactionType.EXPENSE),
+        this.prisma.transaction.findFirst({
+          where: {
+            userId,
+            type: TransactionType.EXPENSE,
+            date: { gte: start, lte: end },
+          },
+          include: {
+            category: {
+              select: { id: true, name: true, icon: true, color: true },
+            },
+            account: { select: { id: true, name: true, type: true } },
+          },
+          orderBy: { amount: 'desc' },
+        }),
+        this.getDailyBreakdown(userId, start, end, TransactionType.EXPENSE),
+      ]);
 
     const days = differenceInDays(end, start) + 1;
     const avgDailyExpense = days > 0 ? summary.total / days : 0;
@@ -161,13 +171,13 @@ export class AnalyticsService {
         byCategory,
         largestExpense: largestExpense
           ? {
-            id: largestExpense.id,
-            amount: parseFloat(largestExpense.amount.toString()),
-            description: largestExpense.description,
-            date: largestExpense.date,
-            category: largestExpense.category,
-            account: largestExpense.account,
-          }
+              id: largestExpense.id,
+              amount: parseFloat(largestExpense.amount.toString()),
+              description: largestExpense.description,
+              date: largestExpense.date,
+              category: largestExpense.category,
+              account: largestExpense.account,
+            }
           : null,
         dailyBreakdown,
       },
@@ -183,23 +193,26 @@ export class AnalyticsService {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    const [summary, byCategory, largestIncome, dailyBreakdown] = await Promise.all([
-      this.getTransactionsSummary(userId, start, end, TransactionType.INCOME),
-      this.getCategoryBreakdown(userId, start, end, TransactionType.INCOME),
-      this.prisma.transaction.findFirst({
-        where: {
-          userId,
-          type: TransactionType.INCOME,
-          date: { gte: start, lte: end },
-        },
-        include: {
-          category: { select: { id: true, name: true, icon: true, color: true } },
-          account: { select: { id: true, name: true, type: true } },
-        },
-        orderBy: { amount: 'desc' },
-      }),
-      this.getDailyBreakdown(userId, start, end, TransactionType.INCOME),
-    ]);
+    const [summary, byCategory, largestIncome, dailyBreakdown] =
+      await Promise.all([
+        this.getTransactionsSummary(userId, start, end, TransactionType.INCOME),
+        this.getCategoryBreakdown(userId, start, end, TransactionType.INCOME),
+        this.prisma.transaction.findFirst({
+          where: {
+            userId,
+            type: TransactionType.INCOME,
+            date: { gte: start, lte: end },
+          },
+          include: {
+            category: {
+              select: { id: true, name: true, icon: true, color: true },
+            },
+            account: { select: { id: true, name: true, type: true } },
+          },
+          orderBy: { amount: 'desc' },
+        }),
+        this.getDailyBreakdown(userId, start, end, TransactionType.INCOME),
+      ]);
 
     const days = differenceInDays(end, start) + 1;
     const avgDailyIncome = days > 0 ? summary.total / days : 0;
@@ -216,13 +229,13 @@ export class AnalyticsService {
         byCategory,
         largestIncome: largestIncome
           ? {
-            id: largestIncome.id,
-            amount: parseFloat(largestIncome.amount.toString()),
-            description: largestIncome.description,
-            date: largestIncome.date,
-            category: largestIncome.category,
-            account: largestIncome.account,
-          }
+              id: largestIncome.id,
+              amount: parseFloat(largestIncome.amount.toString()),
+              description: largestIncome.description,
+              date: largestIncome.date,
+              category: largestIncome.category,
+              account: largestIncome.account,
+            }
           : null,
         dailyBreakdown,
       },
@@ -237,15 +250,29 @@ export class AnalyticsService {
     const trendsData = [];
 
     for (let i = intervals - 1; i >= 0; i--) {
-      const { startDate, endDate, label } = this.calculateIntervalDates(period, i);
+      const { startDate, endDate, label } = this.calculateIntervalDates(
+        period,
+        i,
+      );
 
       const [income, expenses] = await Promise.all([
-        this.getTransactionsSummary(userId, startDate, endDate, TransactionType.INCOME),
-        this.getTransactionsSummary(userId, startDate, endDate, TransactionType.EXPENSE),
+        this.getTransactionsSummary(
+          userId,
+          startDate,
+          endDate,
+          TransactionType.INCOME,
+        ),
+        this.getTransactionsSummary(
+          userId,
+          startDate,
+          endDate,
+          TransactionType.EXPENSE,
+        ),
       ]);
 
       const netSavings = income.total - expenses.total;
-      const savingsRate = income.total > 0 ? (netSavings / income.total) * 100 : 0;
+      const savingsRate =
+        income.total > 0 ? (netSavings / income.total) * 100 : 0;
 
       trendsData.push({
         label,
@@ -268,7 +295,7 @@ export class AnalyticsService {
     };
   }
 
-  @CacheResult('analytics:categories', 300) // ✅ Key + TTL 5 min
+  @CacheResult('analytics:categories', 300)
   async getCategoriesDistribution(
     userId: string,
     period: AnalyticsPeriod,
@@ -281,8 +308,18 @@ export class AnalyticsService {
     const { startDate, endDate } = this.calculateDateRange(period, date);
 
     const [totalExpenses, categories] = await Promise.all([
-      this.getTransactionsSummary(userId, startDate, endDate, TransactionType.EXPENSE),
-      this.getCategoryBreakdown(userId, startDate, endDate, TransactionType.EXPENSE),
+      this.getTransactionsSummary(
+        userId,
+        startDate,
+        endDate,
+        TransactionType.EXPENSE,
+      ),
+      this.getCategoryBreakdown(
+        userId,
+        startDate,
+        endDate,
+        TransactionType.EXPENSE,
+      ),
     ]);
 
     return {
@@ -297,7 +334,7 @@ export class AnalyticsService {
     };
   }
 
-  @CacheResult('analytics:comparison', 300) // ✅ Key + TTL 5 min
+  @CacheResult('analytics:comparison', 300)
   async getComparison(
     userId: string,
     currentStart: string,
@@ -365,13 +402,18 @@ export class AnalyticsService {
         },
         changes: {
           incomeChange: parseFloat(
-            calculateChange(currentIncome.total, previousIncome.total).toFixed(2),
+            calculateChange(currentIncome.total, previousIncome.total).toFixed(
+              2,
+            ),
           ),
           incomeChangeAmount: parseFloat(
             (currentIncome.total - previousIncome.total).toFixed(2),
           ),
           expensesChange: parseFloat(
-            calculateChange(currentExpenses.total, previousExpenses.total).toFixed(2),
+            calculateChange(
+              currentExpenses.total,
+              previousExpenses.total,
+            ).toFixed(2),
           ),
           expensesChangeAmount: parseFloat(
             (currentExpenses.total - previousExpenses.total).toFixed(2),
@@ -416,7 +458,6 @@ export class AnalyticsService {
           endDate: endOfYear(referenceDate),
         };
 
-      // ✅ NUEVO: Soporte para período custom
       case AnalyticsPeriod.CUSTOM:
         if (!customStartDate || !customEndDate) {
           throw new BadRequestException(
@@ -436,7 +477,6 @@ export class AnalyticsService {
         throw new BadRequestException('Período inválido');
     }
   }
-
 
   private calculateIntervalDates(
     period: AnalyticsPeriod,
@@ -467,7 +507,10 @@ export class AnalyticsService {
         throw new BadRequestException('Período inválido');
     }
 
-    const label = format(startDate, period === AnalyticsPeriod.YEAR ? 'yyyy' : 'MMM yyyy');
+    const label = format(
+      startDate,
+      period === AnalyticsPeriod.YEAR ? 'yyyy' : 'MMM yyyy',
+    );
 
     return { startDate, endDate, label };
   }
@@ -497,7 +540,9 @@ export class AnalyticsService {
     return {
       total: result._sum.amount ? parseFloat(result._sum.amount.toString()) : 0,
       count: result._count,
-      average: result._avg.amount ? parseFloat(result._avg.amount.toString()) : 0,
+      average: result._avg.amount
+        ? parseFloat(result._avg.amount.toString())
+        : 0,
     };
   }
 
@@ -556,7 +601,12 @@ export class AnalyticsService {
     type: TransactionType,
     limit: number,
   ): Promise<CategorySummary[]> {
-    const breakdown = await this.getCategoryBreakdown(userId, startDate, endDate, type);
+    const breakdown = await this.getCategoryBreakdown(
+      userId,
+      startDate,
+      endDate,
+      type,
+    );
     return breakdown.slice(0, limit);
   }
 
@@ -612,7 +662,9 @@ export class AnalyticsService {
     const end = new Date(endDate);
 
     if (start > end) {
-      throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
+      throw new BadRequestException(
+        'La fecha de inicio debe ser anterior a la fecha de fin',
+      );
     }
 
     if (start > new Date()) {

@@ -4,7 +4,7 @@ import { CacheModule } from '../infrastructure/cache/cache.module';
 
 @Global()
 @Module({
-  imports: [CacheModule], // ✅ Importar tu CacheModule existente
+  imports: [CacheModule],
   providers: [CacheInvalidationService],
   exports: [CacheInvalidationService],
 })

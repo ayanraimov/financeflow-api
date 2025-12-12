@@ -10,7 +10,7 @@ import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import type { Cache } from 'cache-manager'; // ✅ Import tipo
+import type { Cache } from 'cache-manager';
 import { CACHE_KEY, CACHE_TTL } from '../decorators/cache-result.decorator';
 import * as crypto from 'crypto';
 

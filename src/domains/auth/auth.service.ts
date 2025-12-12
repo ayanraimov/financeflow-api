@@ -170,7 +170,6 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-
   private async updateRefreshToken(
     userId: string,
     refreshToken: string,

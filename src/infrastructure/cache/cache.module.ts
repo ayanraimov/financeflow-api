@@ -29,7 +29,10 @@ import { redisStore } from 'cache-manager-redis-yet';
           logger.log('✅ Redis cache store initialized successfully');
           return { store };
         } catch (error) {
-          logger.error('❌ Redis cache store initialization failed:', error.message);
+          logger.error(
+            '❌ Redis cache store initialization failed:',
+            error.message,
+          );
           throw error;
         }
       },

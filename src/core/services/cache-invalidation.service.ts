@@ -34,10 +34,7 @@ export class CacheInvalidationService {
   }
 
   async invalidateAccounts(userId: string): Promise<void> {
-    const keys = [
-      `accounts:list:${userId}`,
-      `accounts:balance:${userId}`,
-    ];
+    const keys = [`accounts:list:${userId}`, `accounts:balance:${userId}`];
 
     await this.deleteKeys(keys);
     this.logger.log(`🗑️ Invalidated accounts cache for user ${userId}`);

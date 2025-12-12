@@ -13,8 +13,16 @@ export class IsNotFutureDate implements ValidatorConstraintInterface {
     const now = new Date();
 
     // Resetear horas para comparar SOLO fechas (sin mutar el original)
-    const inputDateOnly = new Date(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate());
-    const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const inputDateOnly = new Date(
+      inputDate.getFullYear(),
+      inputDate.getMonth(),
+      inputDate.getDate(),
+    );
+    const nowDateOnly = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
 
     return inputDateOnly <= nowDateOnly;
   }

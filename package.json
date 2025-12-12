@@ -1,10 +1,30 @@
 {
   "name": "financeflow",
-  "version": "0.0.1",
-  "description": "",
-  "author": "",
-  "private": true,
-  "license": "UNLICENSED",
+  "version": "1.0.0",
+  "description": "RESTful API for personal finance management built with NestJS, TypeScript, PostgreSQL, Prisma, and Redis",
+  "author": "Ayan Reyhanov Raimov <ayanrr0692@gmail.com>",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ayanraimov/financeflow-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ayanraimov/financeflow-api/issues"
+  },
+  "homepage": "https://github.com/ayanraimov/financeflow-api#readme",
+  "keywords": [
+    "nestjs",
+    "typescript",
+    "postgresql",
+    "prisma",
+    "redis",
+    "finance",
+    "api",
+    "rest",
+    "jwt",
+    "authentication"
+  ],
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

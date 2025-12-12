@@ -35,7 +35,7 @@ export class CreateBudgetDto {
 
   @ApiProperty({
     description: 'Monto del presupuesto (máximo 2 decimales)',
-    example: 500.00,
+    example: 500.0,
     minimum: 0.01,
   })
   @IsNumber(

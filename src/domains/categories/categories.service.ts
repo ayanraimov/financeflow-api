@@ -178,9 +178,7 @@ export class CategoriesService {
 
     // Cannot delete default categories
     if (category.isDefault) {
-      throw new ForbiddenException(
-        'Cannot delete default system categories',
-      );
+      throw new ForbiddenException('Cannot delete default system categories');
     }
 
     // Verify ownership
@@ -235,9 +233,7 @@ export class CategoriesService {
 
     const totalAmount = aggregation._sum.amount ?? new Decimal(0);
     const avgAmount =
-      transactionCount > 0
-        ? totalAmount.div(transactionCount)
-        : new Decimal(0);
+      transactionCount > 0 ? totalAmount.div(transactionCount) : new Decimal(0);
 
     return {
       categoryId: id,
@@ -268,7 +264,14 @@ export class CategoriesService {
     switch (filters.period) {
       case StatsPeriod.MONTH: {
         const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        const end = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+        );
         return { start, end };
       }
 

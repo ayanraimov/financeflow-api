@@ -139,7 +139,6 @@ export class AnalyticsController {
     @CurrentUser('sub') userId: string,
     @Query() query: AnalyticsPeriodDto,
   ) {
-    // ✅ Manejar valor por defecto
     const period = query.period ?? AnalyticsPeriod.MONTH;
     return this.analyticsService.getCategoriesDistribution(
       userId,

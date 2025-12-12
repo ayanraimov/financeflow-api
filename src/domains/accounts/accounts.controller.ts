@@ -17,11 +17,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AccountsService } from './accounts.service';
-import {
-  CreateAccountDto,
-  UpdateAccountDto,
-  AccountResponseDto,
-} from './dto';
+import { CreateAccountDto, UpdateAccountDto, AccountResponseDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../core/decorators/get-user.decorator';
 

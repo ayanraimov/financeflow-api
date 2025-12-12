@@ -31,7 +31,7 @@ export class CreateAccountDto {
   type: AccountType;
 
   @ApiProperty({
-    example: 1500.50,
+    example: 1500.5,
     description: 'Balance inicial de la cuenta',
   })
   @IsNumber()

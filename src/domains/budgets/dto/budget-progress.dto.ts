@@ -25,17 +25,17 @@ export class BudgetProgressDto {
   @ApiProperty({ type: CategorySummaryDto })
   category: CategorySummaryDto;
 
-  @ApiProperty({ example: 500.00, description: 'Monto del presupuesto' })
+  @ApiProperty({ example: 500.0, description: 'Monto del presupuesto' })
   amount: number;
 
-  @ApiProperty({ example: 320.50, description: 'Monto gastado' })
+  @ApiProperty({ example: 320.5, description: 'Monto gastado' })
   spent: number;
 
-  @ApiProperty({ example: 179.50, description: 'Monto restante' })
+  @ApiProperty({ example: 179.5, description: 'Monto restante' })
   remaining: number;
 
   @ApiProperty({
-    example: 64.10,
+    example: 64.1,
     description: 'Porcentaje usado (puede ser > 100)',
   })
   percentageUsed: number;

@@ -53,7 +53,11 @@ export class BudgetsController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'isActive', required: false, type: Boolean })
   @ApiQuery({ name: 'categoryId', required: false, type: String })
-  @ApiQuery({ name: 'period', required: false, enum: ['WEEKLY', 'MONTHLY', 'YEARLY'] })
+  @ApiQuery({
+    name: 'period',
+    required: false,
+    enum: ['WEEKLY', 'MONTHLY', 'YEARLY'],
+  })
   @ApiResponse({
     status: 200,
     description: 'Lista de presupuestos obtenida exitosamente',

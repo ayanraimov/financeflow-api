@@ -8,7 +8,10 @@ import {
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
-import { PaginatedResponse, PaginationMeta } from '../../core/interfaces/paginated-response.interface';
+import {
+  PaginatedResponse,
+  PaginationMeta,
+} from '../../core/interfaces/paginated-response.interface';
 import { TransactionFilterDto } from './dto/transaction-filter.dto';
 import { BulkTransactionDto } from './dto/bulk-transaction.dto';
 import { Prisma, TransactionType } from '@prisma/client';
@@ -17,7 +20,7 @@ import { CacheInvalidationService } from '../../core/services/cache-invalidation
 
 @Injectable()
 export class TransactionsService {
-  private readonly logger = new Logger(TransactionsService.name); // ✅ Añadir esta línea
+  private readonly logger = new Logger(TransactionsService.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -140,7 +143,13 @@ export class TransactionsService {
             select: { id: true, name: true, type: true, color: true },
           },
           category: {
-            select: { id: true, name: true, icon: true, color: true, type: true },
+            select: {
+              id: true,
+              name: true,
+              icon: true,
+              color: true,
+              type: true,
+            },
           },
         },
       }),

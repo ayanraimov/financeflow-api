@@ -79,10 +79,7 @@ export class CategoriesController {
   @ApiResponse({ status: 200, description: 'Category found' })
   @ApiResponse({ status: 404, description: 'Category not found' })
   @ApiResponse({ status: 403, description: 'Access denied' })
-  async findOne(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
+  async findOne(@CurrentUser('id') userId: string, @Param('id') id: string) {
     const category = await this.categoriesService.findOne(userId, id);
     return {
       success: true,
@@ -143,10 +140,7 @@ export class CategoriesController {
     status: 409,
     description: 'Category has active transactions',
   })
-  async remove(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
+  async remove(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return await this.categoriesService.remove(userId, id);
   }
 }
