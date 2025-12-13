@@ -4,10 +4,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { RegisterDto, LoginDto, AuthResponseDto } from './dto';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
+import * as argon2 from 'argon2';
+import type { StringValue } from 'ms';
 
 @Injectable()
 export class AuthService {
@@ -44,7 +47,7 @@ export class AuthService {
     });
 
     const tokens = await this.generateTokens(user.id, user.email);
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
+    await this.updateRefreshTokenHash(user.id, tokens.refreshToken);
 
     return {
       ...tokens,
@@ -71,7 +74,7 @@ export class AuthService {
     }
 
     const tokens = await this.generateTokens(user.id, user.email);
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
+    await this.updateRefreshTokenHash(user.id, tokens.refreshToken);
 
     return {
       ...tokens,
@@ -96,20 +99,21 @@ export class AuthService {
       throw new UnauthorizedException('Acceso denegado');
     }
 
-    const refreshTokenMatches = await bcrypt.compare(
-      refreshToken,
+    const refreshTokenMatches = await argon2.verify(
       user.refreshToken,
+      refreshToken,
     );
-
     if (!refreshTokenMatches) {
       throw new UnauthorizedException('Acceso denegado');
     }
 
     const tokens = await this.generateTokens(user.id, user.email);
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
+
+    await this.updateRefreshTokenHash(user.id, tokens.refreshToken);
 
     return {
-      ...tokens,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -117,6 +121,14 @@ export class AuthService {
         lastName: user.lastName,
       },
     };
+  }
+
+  private async updateRefreshTokenHash(userId: string, refreshToken: string) {
+    const hash = await argon2.hash(refreshToken);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: hash },
+    });
   }
 
   async logout(userId: string): Promise<void> {
@@ -131,53 +143,29 @@ export class AuthService {
     return bcrypt.hash(password, saltRounds);
   }
 
-  private async generateTokens(
-    userId: string,
-    email: string,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  async generateTokens(userId: string, email: string) {
     const payload = { sub: userId, email };
 
-    const accessSecret = this.configService.get<string>('jwt.accessSecret');
-    const refreshSecret = this.configService.get<string>('jwt.refreshSecret');
-    const accessExpiration = this.configService.get<string>(
-      'jwt.accessExpiration',
+    const jwtSecret = this.configService.getOrThrow<string>('JWT_SECRET');
+    const jwtExpiresIn = this.configService.getOrThrow<string>('JWT_EXPIRES_IN') as StringValue;
+
+    const refreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
+    const refreshExpiresIn =
+      this.configService.getOrThrow<string>('JWT_REFRESH_EXPIRES_IN') as StringValue;
+
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: jwtSecret,
+      expiresIn: jwtExpiresIn,
+    } satisfies JwtSignOptions);
+
+    const refreshToken = await this.jwtService.signAsync(
+      { ...payload, jti: randomUUID() },
+      {
+        secret: refreshSecret,
+        expiresIn: refreshExpiresIn,
+      } satisfies JwtSignOptions,
     );
-    const refreshExpiration = this.configService.get<string>(
-      'jwt.refreshExpiration',
-    );
-
-    if (
-      !accessSecret ||
-      !refreshSecret ||
-      !accessExpiration ||
-      !refreshExpiration
-    ) {
-      throw new Error('JWT configuration is missing');
-    }
-
-    // @ts-ignore - TypeScript tiene problemas con las sobrecargas de sign()
-    const accessToken = this.jwtService.sign(payload, {
-      secret: accessSecret,
-      expiresIn: accessExpiration,
-    });
-
-    // @ts-ignore - TypeScript tiene problemas con las sobrecargas de sign()
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: refreshSecret,
-      expiresIn: refreshExpiration,
-    });
 
     return { accessToken, refreshToken };
-  }
-
-  private async updateRefreshToken(
-    userId: string,
-    refreshToken: string,
-  ): Promise<void> {
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { refreshToken: hashedRefreshToken },
-    });
   }
 }
