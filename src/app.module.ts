@@ -17,6 +17,9 @@ import { AnalyticsModule } from './domains/analytics/analytics.module';
 import { CoreModule } from './core/core.module';
 import { APP_GUARD } from '@nestjs/core';
 
+// ⭐ Detectar ambiente de testing
+const isTestEnv = process.env.NODE_ENV === 'test';
+
 @Module({
   imports: [
     // Configuration with validation
@@ -24,32 +27,36 @@ import { APP_GUARD } from '@nestjs/core';
       isGlobal: true,
       load: [configuration],
       validate,
-      envFilePath: '.env',
+      envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
     }),
 
-    // Rate Limiting
-    ThrottlerModule.forRoot([
-      {
-        name: 'default',
-        ttl: 60000, // 1 minute
-        limit: 100, // 100 requests per minute (general)
-      },
-      {
-        name: 'auth',
-        ttl: 60000, // 1 minute
-        limit: 5, // 5 requests per minute (auth endpoints)
-      },
-      {
-        name: 'strict',
-        ttl: 600000, // 10 minutes
-        limit: 3, // 3 requests per 10 minutes (register)
-      },
-      {
-        name: 'analytics',
-        ttl: 60000, // 1 minute
-        limit: 30, // 30 requests per minute (heavy queries)
-      },
-    ]),
+    // ⭐ Rate Limiting - Solo en producción/desarrollo, NO en tests
+    ...(isTestEnv
+      ? []
+      : [
+        ThrottlerModule.forRoot([
+          {
+            name: 'default',
+            ttl: 60000, // 1 minute
+            limit: 100, // 100 requests per minute (general)
+          },
+          {
+            name: 'auth',
+            ttl: 60000, // 1 minute
+            limit: 5, // 5 requests per minute (auth endpoints)
+          },
+          {
+            name: 'strict',
+            ttl: 600000, // 10 minutes
+            limit: 3, // 3 requests per 10 minutes (register)
+          },
+          {
+            name: 'analytics',
+            ttl: 60000, // 1 minute
+            limit: 30, // 30 requests per minute (heavy queries)
+          },
+        ]),
+      ]),
 
     // Global Modules
     PrismaModule,
@@ -66,10 +73,15 @@ import { APP_GUARD } from '@nestjs/core';
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    // ⭐ Throttler Guard - Solo en producción/desarrollo, NO en tests
+    ...(isTestEnv
+      ? []
+      : [
+        {
+          provide: APP_GUARD,
+          useClass: ThrottlerGuard,
+        },
+      ]),
   ],
 })
 export class AppModule {}
