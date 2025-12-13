@@ -18,16 +18,16 @@ class EnvironmentVariables {
   DATABASE_URL: string;
 
   @IsString()
-  JWT_ACCESS_SECRET: string;
+  JWT_SECRET: string;
+
+  @IsString()
+  JWT_EXPIRES_IN: string;
 
   @IsString()
   JWT_REFRESH_SECRET: string;
 
   @IsString()
-  JWT_ACCESS_EXPIRATION: string;
-
-  @IsString()
-  JWT_REFRESH_EXPIRATION: string;
+  JWT_REFRESH_EXPIRES_IN: string;
 
   @IsString()
   REDIS_HOST: string;

@@ -37,6 +37,7 @@ model Account {
   balance   Decimal     @default(0) @db.Decimal(15, 2)
   currency  String      @default("EUR")
   color     String      @default("#4ECDC4")
+  icon      String      @default("💳")
   isDefault Boolean     @default(false)
   isActive  Boolean     @default(true)
   createdAt DateTime    @default(now())
