@@ -6,6 +6,7 @@ import compression from 'compression';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './core/exceptions';
+import { setupApp } from './setup-app';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -16,8 +17,10 @@ async function bootstrap() {
   const port = configService.get<number>('port') ?? 3000;
   const nodeEnv = process.env.NODE_ENV || 'development';
 
+  setupApp(app, false);
+
   // Global Exception Filter
-  app.useGlobalFilters(new AllExceptionsFilter());
+  // app.useGlobalFilters(new AllExceptionsFilter());
 
   app.use(
     helmet({

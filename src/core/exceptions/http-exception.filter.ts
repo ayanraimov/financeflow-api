@@ -37,16 +37,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = exception.message;
         error = exception.name;
       }
-    } else if (exception instanceof Error) {
-      message = exception.message;
-      error = exception.name;
+    } else if (status >= 500) {
+      this.logger.error(
+        `${request.method} ${request.url} - Status: ${status} - Message: ${message}`,
+        exception instanceof Error ? exception.stack : undefined,
+      );
+    } else {
+      this.logger.warn(
+        `${request.method} ${request.url} - Status: ${status} - Message: ${message}`,
+      );
     }
-
-    // Log del error
-    this.logger.error(
-      `${request.method} ${request.url} - Status: ${status} - Message: ${message}`,
-      exception instanceof Error ? exception.stack : undefined,
-    );
 
     // Respuesta consistente
     const errorResponse = {
