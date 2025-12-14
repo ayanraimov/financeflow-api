@@ -185,4 +185,14 @@ export class TestHelpers {
 
     return res.body.data;
   }
+
+  // ---- ANALYTICS ----
+  async getAnalyticsOverview(accessToken: string, period: string = 'MONTH') {
+    const res = await this.http()
+      .get(`/api/v1/analytics/overview?period=${period}`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    return res.body.data;
+  }
 }
