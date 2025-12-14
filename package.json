@@ -1,6 +1,10 @@
 {
   "name": "financeflow",
   "version": "1.0.0",
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
+  },
   "description": "RESTful API for personal finance management built with NestJS, TypeScript, PostgreSQL, Prisma, and Redis",
   "author": "Ayan Reyhanov Raimov <ayanrr0692@gmail.com>",
   "private": false,

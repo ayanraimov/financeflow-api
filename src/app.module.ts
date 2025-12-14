@@ -16,6 +16,7 @@ import { BudgetsModule } from './domains/budgets/budgets.module';
 import { AnalyticsModule } from './domains/analytics/analytics.module';
 import { CoreModule } from './core/core.module';
 import { APP_GUARD } from '@nestjs/core';
+import { HealthModule } from './health/health.module';
 
 // ⭐ Detectar ambiente de testing
 const isTestEnv = process.env.NODE_ENV === 'test';
@@ -69,6 +70,7 @@ const isTestEnv = process.env.NODE_ENV === 'test';
     BudgetsModule,
     AnalyticsModule,
     CoreModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
