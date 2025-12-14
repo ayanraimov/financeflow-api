@@ -44,6 +44,30 @@ export class TestHelpers {
     };
   }
 
+  async registerUser(userData: Partial<{ email: string; password: string; firstName: string; lastName: string }> = {}) {
+    const email = userData.email || `e2e_${Date.now()}@test.com`;
+    const password = userData.password || 'Test123!';
+    const firstName = userData.firstName || 'E2E';
+    const lastName = userData.lastName || 'User';
+
+    const registerRes = await this.http()
+      .post('/api/v1/auth/register')
+      .send({ email, password, firstName, lastName })
+      .expect(201);
+
+    const data = registerRes.body?.data ?? registerRes.body;
+
+    return {
+      email,
+      password,
+      user: data.user,
+      tokens: {
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+      },
+    };
+  }
+
   // ---- ACCOUNTS (responde plano) ----
   async createAccount(accessToken: string, payload: any) {
     const res = await this.http()
