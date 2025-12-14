@@ -165,4 +165,24 @@ export class TestHelpers {
       .delete(`/api/v1/transactions/${transactionId}`)
       .set('Authorization', `Bearer ${accessToken}`);
   }
+
+  // ---- BUDGETS ----
+  async createBudget(accessToken: string, payload: any) {
+    const res = await this.http()
+      .post('/api/v1/budgets')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send(payload)
+      .expect(201);
+
+    return res.body.data;
+  }
+
+  async getBudgetProgress(accessToken: string, budgetId: string) {
+    const res = await this.http()
+      .get(`/api/v1/budgets/${budgetId}/progress`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    return res.body.data;
+  }
 }
